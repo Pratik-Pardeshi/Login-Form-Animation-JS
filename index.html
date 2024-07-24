@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f06, #4a90e2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .background canvas {
+            display: block;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+            z-index: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #4a90e2, #f06);
+            clip-path: circle(150px at 0% 0%);
+            z-index: -1;
+            transition: clip-path 0.8s ease-out;
+        }
+
+        .login-container:hover:before {
+            clip-path: circle(300px at 100% 100%);
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box;
+            outline: none;
+            transition: background 0.3s ease, transform 0.3s ease;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .form-group input:focus {
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .form-group input:not(:placeholder-shown) + label {
+            top: 8px;
+            left: 15px;
+            font-size: 12px;
+            color: #333;
+            background: #fff;
+            padding: 0 5px;
+        }
+
+        .form-group label {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            color: rgba(0, 0, 0, 0.5);
+            transform: translateY(-50%);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+            font-size: 16px;
+        }
+
+        .form-group input.error {
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            display: none;
+            margin-top: 5px;
+            text-align: left;
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            width: 100%;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+            font-size: 14px;
+        }
+
+        .form-group input.error + .error-message {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a90e2, #f06);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(135deg, #f06, #4a90e2);
+            transform: scale(1.05);
+        }
+
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        footer {
+            margin-top: 20px;
+            color: #fff;
+            text-align: center;
+            font-size: 14px;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <canvas id="backgroundCanvas"></canvas>
+    </div>
+    <div class="login-container">
+        <h2>Login Form</h2>
+        <form id="loginForm" onsubmit="return submitForm()">
+            <div class="form-group">
+                <input type="text" id="username" name="username" required>
+                <label for="username">Username</label>
+                <div class="error-message" id="usernameError">Username is required.</div>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" name="password" required>
+                <label for="password">Password</label>
+                <div class="error-message" id="passwordError">Password is required.</div>
+            </div>
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+    </div>
+    <footer>
+        &copy; 2024. Made by Pratik Pardeshi.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('backgroundCanvas');
+            const ctx = canvas.getContext('2d');
+            let particlesArray;
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', function(){
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                init();
+            });
+
+            const mouse = {
+                x: null,
+                y: null,
+                radius: (canvas.height / 80) * (canvas.width / 80)
+            }
+
+            window.addEventListener('mousemove', function(event){
+                mouse.x = event.x;
+                mouse.y = event.y;
+            });
+
+            class Particle {
+                constructor(x, y, directionX, directionY, size, color){
+                    this.x = x;
+                    this.y = y;
+                    this.directionX = directionX;
+                    this.directionY = directionY;
+                    this.size = size;
+                    this.color = color;
+                }
+                draw(){
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                }
+                update(){
+                    if (this.x > canvas.width || this.x < 0) {
+                        this.directionX = -this.directionX;
+                    }
+                    if (this.y > canvas.height || this.y < 0) {
+                        this.directionY = -this.directionY;
+                    }
+                    this.x += this.directionX;
+                    this.y += this.directionY;
+
+                    // Mouse interactivity
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < mouse.radius + this.size){
+                        if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
+                            this.x += 10;
+                        }
+                        if (mouse.x > this.x && this.x > this.size * 10) {
+                            this.x -= 10;
+                        }
+                        if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
+                            this.y += 10;
+                        }
+                        if (mouse.y > this.y && this.y > this.size * 10) {
+                            this.y -= 10;
+                        }
+                    }
+                    this.draw();
+                }
+            }
+
+            function init(){
+                particlesArray = [];
+                let numberOfParticles = (canvas.height * canvas.width) / 9000;
+                for (let i = 0; i < numberOfParticles; i++){
+                    let size = (Math.random() * 5) + 1;
+                    let x = (Math.random() * ((canvas.width - size * 2) - (size * 2)) + size * 2);
+                    let y = (Math.random() * ((canvas.height - size * 2) - (size * 2)) + size * 2);
+                    let directionX = (Math.random() * 5) - 2.5;
+                    let directionY = (Math.random() * 5) - 2.5;
+                    let color = '#ffffff';
+
+                    particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                }
+            }
+
+            function animate(){
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let i = 0; i < particlesArray.length; i++){
+                    particlesArray[i].update();
+                }
+                connect();
+            }
+
+            function connect(){
+                let opacityValue = 1;
+                for (let a = 0; a < particlesArray.length; a++){
+                    for (let b = a; b < particlesArray.length; b++){
+                        let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                        + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                        if (distance < (canvas.width/7) * (canvas.height/7)){
+                            opacityValue = 1 - (distance/20000);
+                            ctx.strokeStyle = 'rgba(255,255,255,' + opacityValue + ')';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            init();
+            animate();
+        });
+
+        function submitForm() {
+            let valid = true;
+
+            // Username validation
+            const username = document.getElementById('username');
+            const usernameError = document.getElementById('usernameError');
+            if (username.value.trim() === '') {
+                username.classList.add('error');
+                usernameError.style.display = 'block';
+                valid = false;
+            } else {
+                username.classList.remove('error');
+                usernameError.style.display = 'none';
+            }
+
+            // Password validation
+            const password = document.getElementById('password');
+            const passwordError = document.getElementById('passwordError');
+            if (password.value.trim() === '') {
+                password.classList.add('error');
+                passwordError.style.display = 'block';
+                valid = false;
+            } else {
+                password.classList.remove('error');
+                passwordError.style.display = 'none';
+            }
+
+            if (valid) {
+                // Simulating AJAX request (replace with actual request)
+                setTimeout(() => {
+                    alert('Hii Pratik Here, Welcome to my Website ');
+                    // Reset form
+                    document.getElementById('loginForm').reset();
+                }, 1000);
+            }
+
+            return false; // Prevent form submission
+        }
+    </script>
+</body>
+</html>
